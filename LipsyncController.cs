@@ -63,8 +63,8 @@ public class LipsyncController : MonoBehaviour
 	private AudioSource audio;
 	private const float fFloor = 20;
 	private float prevSum;
-	private float y0;
-	private float y1;
+	private float a0;
+	private float a1;
 	private int sizeFilter = 5;
 	private float[] filter;
 	private float filterSum;
@@ -78,17 +78,17 @@ public class LipsyncController : MonoBehaviour
 	{
 		audio = GetComponent<AudioSource>(); // get AudioSource component
 		if (mouthAxis == Axis.Y)
-			y0 = mouth.transform.localPosition.y;
+			a0 = mouth.transform.localPosition.y;
 		else if (mouthAxis == Axis.X)
-			y0 = mouth.transform.localPosition.x;
+			a0 = mouth.transform.localPosition.x;
 		else
-			y0 = mouth.transform.localPosition.z;
+			a0 = mouth.transform.localPosition.z;
 		if (mouthRotAxis == Axis.Y)
-			y1 = mouth.transform.localRotation.y;
+			a1 = mouth.transform.localRotation.y;
 		else if (mouthRotAxis == Axis.X)
-			y1 = mouth.transform.localRotation.x;
+			a1 = mouth.transform.localRotation.x;
 		else
-			y1 = mouth.transform.localRotation.z;
+			a1 = mouth.transform.localRotation.z;
 		freqData = new float[(int)nSamples];
 		audio.Play();
 		//aSamples = new float[aSamplesLength];
@@ -113,31 +113,33 @@ public class LipsyncController : MonoBehaviour
 			volume = Mathf.Lerp(minVol, maxVol, Mathf.InverseLerp(minDistance, maxDistance,
 				Vector3.Distance(audio.transform.position, Camera.main.transform.position)));
 		}
+		float v = CalcSpectrum(frqLow, frqHigh);
+		float mAV = MovingAverage(v);
 		Vector3 pos = mouth.transform.localPosition;
 		Quaternion rot = mouth.transform.localRotation;
 		if (mouthAxis == Axis.Y)
 		{
-			pos.y = y0 + MovingAverage(BandVol(frqLow, frqHigh)) * volume;
+			pos.y = a0 + mAV * volume;
 		}
 		else if (mouthAxis == Axis.X)
 		{
-			pos.x = y0 + MovingAverage(BandVol(frqLow, frqHigh)) * volume;
+			pos.x = a0 + mAV * volume;
 		}
 		else
 		{
-			pos.z = y0 + MovingAverage(BandVol(frqLow, frqHigh)) * volume;
+			pos.z = a0 + mAV * volume;
 		}
 		if (mouthRotAxis == Axis.Y)
 		{
-			rot.y = y1 + BandVol(frqLow, frqHigh) * rotVolume;
+			rot.y = a1 + v * rotVolume;
 		}
 		else if (mouthRotAxis == Axis.X)
 		{
-			rot.x = y1 + BandVol(frqLow, frqHigh) * rotVolume;
+			rot.x = a1 + v * rotVolume;
 		}
 		else
 		{
-			rot.z = y1 + BandVol(frqLow, frqHigh) * rotVolume;
+			rot.z = a1 + v * rotVolume;
 		}
 		mouth.transform.localPosition = pos;
 		mouth.transform.localRotation = rot;
@@ -148,27 +150,27 @@ public class LipsyncController : MonoBehaviour
 		Quaternion rot = mouth.transform.localRotation;
 		if (mouthAxis == Axis.Y)
 		{
-			pos.y = y0;
+			pos.y = a0;
 		}
 		else if (mouthAxis == Axis.X)
 		{
-			pos.x = y0;
+			pos.x = a0;
 		}
 		else
 		{
-			pos.z = y0;
+			pos.z = a0;
 		}
 		if (mouthRotAxis == Axis.Y)
 		{
-			rot.y = y1;
+			rot.y = a1;
 		}
 		else if (mouthRotAxis == Axis.X)
 		{
-			rot.x = y1;
+			rot.x = a1;
 		}
 		else
 		{
-			rot.z = y1;
+			rot.z = a1;
 		}
 		mouth.transform.localPosition = pos;
 		mouth.transform.localRotation = rot;
@@ -196,7 +198,7 @@ public class LipsyncController : MonoBehaviour
 	/// <summary>
 	/// Set mouth to base closed state
 	/// </summary>
-	float BandVol(float fLow, float fHigh)
+	float CalcSpectrum(float fLow, float fHigh)
 	{
 		fLow = Mathf.Clamp(fLow, fFloor, fMax);
 		fHigh = Mathf.Clamp(fHigh, fLow, fMax);
@@ -227,3 +229,4 @@ public class LipsyncController : MonoBehaviour
 		return Mathf.Sqrt(sum / aSamplesLength);
 	}
 }
+
