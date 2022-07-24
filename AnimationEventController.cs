@@ -9,8 +9,4 @@ public class AnimationEventController : MonoBehaviour
 	{
 		events[e.intParameter].Invoke();
 	}
-	public void ShakeScreen(float val)
-	{
-		CamFollow.Instance.Shake(val);
-	}
 }
